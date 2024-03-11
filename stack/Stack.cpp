@@ -8,24 +8,24 @@ Stack::Stack()
 
 Stack::~Stack()
 {
-    this->clear();
+    clear();
 }
 
 void Stack::push(int value)
 {
     Node *node = new Node(value);
-    node->next = this->top;
-    this->top = node;
+    node->next = top;
+    top = node;
 }
 
 int Stack::pop()
 {
-    if (this->isEmpty())
+    if (isEmpty())
     {
         return 0;
     }
-    Node *node = this->top;
-    this->top = node->next;
+    Node *node = top;
+    top = node->next;
     int value = node->value;
     delete node;
     return value;
@@ -33,13 +33,13 @@ int Stack::pop()
 
 void Stack::clear()
 {
-    while (!this->isEmpty())
+    while (!isEmpty())
     {
-        this->pop();
+        pop();
     }
 }
 
 bool Stack::isEmpty()
 {
-    return this->top == nullptr;
+    return top == nullptr;
 }
