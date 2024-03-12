@@ -15,6 +15,8 @@ class HashTable {
         bool contains(int key);
         void clear();
         void print();
+        int elements();
+        double loadFactor();
     private:
         int size;
         Node<T> **table;
@@ -104,8 +106,9 @@ void HashTable<T>::clear()
 template <typename T>
 void HashTable<T>::print()
 {
-    std::cout << "Table size: " << size << std::endl;
-    std::cout << "Load factor: X" << std::endl;
+    std::cout << "> Table size: " << size << std::endl;
+    std::cout << "> Elements: " << elements() << std::endl;
+    std::cout << "> Load factor: " << loadFactor() << std::endl;
     for (int i = 0; i < size; i++)
     {
         std::cout << std::setw(3) << i << ". ";
@@ -121,6 +124,30 @@ void HashTable<T>::print()
             node = node->next;
         }
     }
+}
+
+template <typename T>
+int HashTable<T>::elements()
+{
+    int count = 0;
+    for (int i = 0; i < size; i++)
+    {
+        Node<T> *node = table[i];
+        while (node != nullptr)
+        {
+            count++;
+            node = node->next;
+        }
+    }
+    return count;
+}
+
+template <typename T>
+double HashTable<T>::loadFactor()
+{
+    double quantity = (double) elements();
+    double loadFactor = quantity / (double) size;
+    return loadFactor;
 }
 
 template <typename T>
