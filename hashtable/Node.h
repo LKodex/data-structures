@@ -1,10 +1,22 @@
+#pragma once
+
+template <typename T>
 class Node {
-    friend class HashTable;
+    template <typename R> friend class HashTable;
 
     public:
-        Node(int key, int value, Node *next);
+        Node(int key, T value, Node<T> *next = nullptr);
     private:
         int key;
-        int value;
+        T value;
         Node *next;
 };
+
+template <typename T>
+Node<T>::Node(int key, T value, Node<T> *next)
+    : key(key)
+    , value(value)
+    , next(next)
+{
+
+}
