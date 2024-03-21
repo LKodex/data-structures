@@ -2,32 +2,52 @@
 
 #include "Node.hpp"
 #include <stdlib.h>
+#include <vector>
 
 template<typename T>
 class Heap
 {
     public:
-        Heap(int initialSize = 10, int growFactor = 10);
+        Heap();
+        Heap(Node<T> array, int size);
+        Heap(Node<T> *array, int size);
         ~Heap();
+        T pop();
+        void put(int priority, T element);
     private:
-        int left(int i);
-        int right(int i);
-        int parent(int i);
-        void down(int i);
-        void up(int i);
-        Node<T> *array;
-        int maxSize;
-        int size;
-        int growFactor;
+        std::vector<Node<T>> vector;
+        int left(int index);
+        int right(int index);
+        int parent(int index);
+        void swap(int firstIndex, int secondIndex);
+        void down(int index);
+        void up(int index);
+        void heapify();
 };
 
 template<typename T>
-Heap<T>::Heap(int initialSize, int growFactor)
-    : size(0)
-    , maxSize(initialSize)
-    , growFactor(growFactor)
+Heap<T>::Heap()
+    : vector(std::vector<Node<T>>())
 {
-    array = calloc(initialSize, sizeof(Node<T>));
+}
+
+template<typename T>
+Heap<T>::Heap(Node<T> array, int size)
+{
+    Heap();
+    for (int i = 0; i < size; i++)
+    {
+        Node<T> *node = new Node<T>(array[i]);
+        vector.push_back(*node);
+    }
+    heapify();
+}
+
+template<typename T>
+Heap<T>::Heap(Node<T> *array, int size)
+    : vector(std::vector<Node<T>>(array, array + size))
+{
+    heapify();
 }
 
 template<typename T>
@@ -36,17 +56,62 @@ Heap<T>::~Heap()
 }
 
 template<typename T>
-void Heap<T>::up(int i)
+T Heap<T>::pop()
 {
-    int parent = parent(i);
-    while (array[parent].key > array[i].key)
+    Node<T> firstNode = vector.front();
+    T element = firstNode.element;
+    vector.front() = vector.back();
+    vector.pop_back();
+    const int FIRST = 0;
+    down(FIRST);
+    return element;
+}
+
+template<typename T>
+void Heap<T>::put(int priority, T element)
+{
+    Node<T> *node = new Node<T>(priority, element);
+    vector.push_back(*node);
+    int lastIndex = vector.size() - 1;
+    up(lastIndex);
+}
+
+template<typename T>
+int Heap<T>::left(int index)
+{
+    return index * 2 + 1;
+}
+
+template<typename T>
+int Heap<T>::right(int index)
+{
+    return index * 2 + 2;
+}
+
+template<typename T>
+int Heap<T>::parent(int index)
+{
+    return (index - 1) / 2;
+}
+
+template<typename T>
+void Heap<T>::swap(int firstIndex, int secondIndex)
+{
+    Node<T> aux = vector[firstIndex];
+    vector[firstIndex] = vector[secondIndex];
+    vector[secondIndex] = aux;
+}
+
+template<typename T>
+void Heap<T>::up(int index)
+{
+    int parentIndex = parent(index);
+    while (vector.at(parentIndex).priority > vector.at(index).priority)
     {
-        Node<T> aux = array[parent]
-        array[parent] = array[i]
-        array[i] = aux;
-        i = parent;
-        parent = parent(i);
-        if (parent < 0)
+        swap(index, parentIndex);
+        index = parentIndex;
+        parentIndex = parent(index);
+        if (parentIndex < 0)
         {
             return;
         }
@@ -54,42 +119,32 @@ void Heap<T>::up(int i)
 }
 
 template<typename T>
-void Heap<T>::down(int i)
+void Heap<T>::down(int index)
 {
-    int left = left(i);
-    int right = right(i);
-    int highest = i;
-    if (right < size && array[right].key > array[highest].key)
+    int leftIndex = left(index);
+    int rightIndex = right(index);
+    int highest = index;
+    if (rightIndex < vector.size() && vector[rightIndex].priority > vector[highest].priority)
     {
-        highest = right;
+        highest = rightIndex;
     }
-    if (left < size && array[left].key > array[highest].key)
+    if (leftIndex < vector.size() && vector[leftIndex].priority > vector[highest].priority)
     {
-        highest = left;
+        highest = leftIndex;
     }
-    if (highest != i)
+    if (highest != index)
     {
-        Node<T> aux = array[highest];
-        array[highest] = array[i];
-        array[i] = aux;
+        swap(highest, index);
         down(highest);
     }
 }
 
 template<typename T>
-int Heap<T>::left(int i)
+void Heap<T>::heapify()
 {
-    return i * 2 + 1;
-}
-
-template<typename T>
-int Heap<T>::right(int i)
-{
-    return i * 2 + 2;
-}
-
-template<typename T>
-int Heap<T>::parent(int i)
-{
-    return (i - 1) / 2;
+    int halfIndex = vector.size() / 2;
+    for (int i = halfIndex - 1; i >= 0; i--)
+    {
+        down(i);
+    }
 }
