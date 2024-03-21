@@ -1,15 +1,14 @@
 #pragma once
 
-#include "HashTable.h"
 #include "Node.h"
 #include "iostream"
 #include "iomanip"
 
 template <typename T>
-class HashTable {
+class HashMap {
     public:
-        HashTable(int size);
-        ~HashTable();
+        HashMap(int size);
+        ~HashMap();
         T remove(int key);
         void put(int key, T value);
         bool contains(int key);
@@ -25,7 +24,7 @@ class HashTable {
 };
 
 template <typename T>
-HashTable<T>::HashTable(int size)
+HashMap<T>::HashMap(int size)
     : size(size)
 {
     table = new Node<T> *[size];
@@ -36,13 +35,13 @@ HashTable<T>::HashTable(int size)
 }
 
 template <typename T>
-HashTable<T>::~HashTable()
+HashMap<T>::~HashMap()
 {
     clear();
 }
 
 template <typename T>
-T HashTable<T>::remove(int key)
+T HashMap<T>::remove(int key)
 {
     int index = hash(key);
     Node<T> *node = table[index];
@@ -63,7 +62,7 @@ T HashTable<T>::remove(int key)
 }
 
 template <typename T>
-void HashTable<T>::put(int key, T value)
+void HashMap<T>::put(int key, T value)
 {
     int index = hash(key);
     Node<T> *node = new Node<T>(key, value, table[index]);
@@ -71,7 +70,7 @@ void HashTable<T>::put(int key, T value)
 }
 
 template <typename T>
-bool HashTable<T>::contains(int key)
+bool HashMap<T>::contains(int key)
 {
     int index = hash(key);
     Node<T> *node = table[index];
@@ -87,7 +86,7 @@ bool HashTable<T>::contains(int key)
 }
 
 template <typename T>
-void HashTable<T>::clear()
+void HashMap<T>::clear()
 {
     for (int i = 0; i < this->size; i++)
     {
@@ -104,7 +103,7 @@ void HashTable<T>::clear()
 }
 
 template <typename T>
-void HashTable<T>::print()
+void HashMap<T>::print()
 {
     std::cout << "> Table size: " << size << std::endl;
     std::cout << "> Elements: " << elements() << std::endl;
@@ -127,7 +126,7 @@ void HashTable<T>::print()
 }
 
 template <typename T>
-int HashTable<T>::elements()
+int HashMap<T>::elements()
 {
     int count = 0;
     for (int i = 0; i < size; i++)
@@ -143,7 +142,7 @@ int HashTable<T>::elements()
 }
 
 template <typename T>
-double HashTable<T>::loadFactor()
+double HashMap<T>::loadFactor()
 {
     double quantity = (double) elements();
     double loadFactor = quantity / (double) size;
@@ -151,14 +150,14 @@ double HashTable<T>::loadFactor()
 }
 
 template <typename T>
-int HashTable<T>::hash(Node<T> *node)
+int HashMap<T>::hash(Node<T> *node)
 {
     int key = node->key;
     return hash(key);
 }
 
 template <typename T>
-int HashTable<T>::hash(int value)
+int HashMap<T>::hash(int value)
 {
     const int PRIME_NUMBER = 757;
     int hash = value * PRIME_NUMBER % size;
