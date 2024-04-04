@@ -106,7 +106,7 @@ template<typename T>
 void Heap<T>::up(int index)
 {
     int parentIndex = parent(index);
-    while (vector.at(parentIndex).priority > vector.at(index).priority)
+    while (vector.at(parentIndex).priority < vector.at(index).priority)
     {
         swap(index, parentIndex);
         index = parentIndex;
