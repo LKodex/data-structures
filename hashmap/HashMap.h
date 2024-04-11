@@ -99,7 +99,7 @@ void HashMap<T>::clear()
             node = next;
         }
     }
-    delete table;
+    delete[] table;
 }
 
 template <typename T>
