@@ -2,7 +2,7 @@
 
 template <typename T>
 class Node {
-    template <typename R> friend class HashTable;
+    template <typename R> friend class HashMap;
 
     public:
         Node(int key, T value, Node<T> *next = nullptr);
