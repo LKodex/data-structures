@@ -70,8 +70,8 @@ T Heap<T>::pop()
 template<typename T>
 void Heap<T>::put(int priority, T element)
 {
-    Node<T> *node = new Node<T>(priority, element);
-    vector.push_back(*node);
+    Node<T> node = Node<T>(priority, element);
+    vector.push_back(node);
     int lastIndex = vector.size() - 1;
     up(lastIndex);
 }
