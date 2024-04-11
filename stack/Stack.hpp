@@ -1,4 +1,19 @@
-#include "Stack.h"
+#pragma once
+
+#include "Node.hpp"
+
+class Stack
+{
+    public:
+        Stack();
+        ~Stack();
+        void push(int value);
+        int pop();
+        void clear();
+        bool isEmpty();
+    private:
+        Node *top;
+};
 
 Stack::Stack()
     : top(nullptr)

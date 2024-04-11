@@ -8,3 +8,10 @@ class Node {
         int value;
         Node *next;
 };
+
+Node::Node(int value)
+    : value(value)
+    , next(nullptr)
+{
+
+}
