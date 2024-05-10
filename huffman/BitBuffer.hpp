@@ -1,95 +1,85 @@
 #include <cstdio>
 #include <cstdint>
 
-/* Byte com buffer para leitura ou escrita bit-a-bit em arquivo. No
-   modo escrita, quando o buffer completa 8 bits, escreve 1 byte no
-   arquivo. No modo leitura, quando o buffer fica vazio, lê 1 byte do
-   arquivo e preenche o buffer. Utilize cada objeto desta classe apenas
-   para ler ou apenas para escrever, nunca os dois (seu comportamento
-   seria indefinido) */
-
-class Bits {
-	private:
-		FILE *file; // Ponteiro para o arquivo sendo lido/escrito
-		uint8_t buffer[8]; // Buffer com bits de um byte
-		uint8_t n; // Quantidade de posições ocupadas no vetor acima
-
+class BitBuffer {
 	public:
-		Bits(FILE *file); // Construtor padrão com o arquivo que será lido ou escrito
-		uint8_t ocupados(); // Devolve quantos bits estão ocupados no buffer do byte
-		uint8_t livres(); // Devolve quantos bits ainda podem ser adicionados ao buffer do byte
+		BitBuffer(FILE *file);
+		uint8_t free_bits();
 
-		// Funções do modo escrita
-		void adiciona_bit(uint8_t bit); // Adiciona um bit 0 ou 1 ao buffer (escreve byte no arquivo se encher)
-		void descarrega(); // Força a escrita do byte no buffer (completa com 0s, caso necessário)
+		// Write mode
+		void put_bit(uint8_t bit);
+		void write_byte();
 
-		// Funções do modo leitura
-		uint8_t obtem_bit(); // Obtém o próximo bit do buffer (lê um byte do arquivo se estiver vazio)
+		// Read mode
+		uint8_t get_bit();
+
+	private:
+		FILE *file;
+		uint8_t buffer;
+		uint8_t size;
 };
-
-int main()
-{
-	FILE *original, *copia;
-	original = fopen("original.txt", "rb");
-	copia = fopen("copia.txt", "wb");
-
-	Bits in(original), out(copia);
-	uint8_t bit;
-	
-	while ((bit = in.obtem_bit()) != 2) {
-		putchar('0' + bit);
-		out.adiciona_bit(bit);
-	}
-	putchar('\n');
-	out.descarrega();
-
-	fclose(original);
-	fclose(copia);
-	
-	return 0;
-}
   
-Bits::Bits(FILE *file) :
+BitBuffer::BitBuffer(FILE *file) :
 	file(file),
-	n(0)
+	size(0)
 { }
 
-void Bits::adiciona_bit(uint8_t bit)
+void BitBuffer::put_bit(uint8_t bit)
 {
-	buffer[n++] = bit != 0; // para usar 0/1 mesmo se bit > 1
-
-	if (n == 8)
-		descarrega();
+	uint8_t new_bit = bit & 0b1;
+	new_bit <<= size;
+	buffer |= new_bit;
+	size++;
+	if (size == 8) write_byte();
 }
 
-void Bits::descarrega()
+void BitBuffer::write_byte()
 {
-	// Implementar
-
-	// Deve completar o byte com 0s para preencher os 8 bits, caso n < 8
-
-	// Leia sobre a função fwrite
-
-	// No final, não esqueça de fazer n receber 0
-}
-
-uint8_t Bits::obtem_bit()
-{
-	// Implementar
-
-	// Caso n == 0, deve ler 1 byte do arquivo e colocar no buffer, ou devolver 2 caso não haja mais bytes para serem lidos do arquivo
-	// Leia sobre a função fread
+	const uint8_t SIZE = 1;	// byte size in bytes
+	const uint8_t QUANTITY = 1; // quantity of bytes to be read
 	
+	bool isBufferEmpty = size == 0;
+	if (isBufferEmpty)
+	{
+		return;
+	}
 
-	// No final, devolver um bit (0 ou 1) e decrementar n
+	buffer <<= free_bits();
+	fwrite(&buffer, SIZE, QUANTITY, file);
+	size = 0;
+	buffer = 0b0;
 }
 
-uint8_t Bits::ocupados()
+uint8_t BitBuffer::get_bit()
 {
-	return n;
+	bool isBufferEmpty = size == 0;
+	if (isBufferEmpty)
+	{
+		fread(&buffer, 1, 1, file);
+		size = 8;
+	}
+
+	bool isEOF = feof(file) != 0;
+	if (isEOF)
+	{
+		const uint8_t _EOF = 0b10; // end of file return value
+		return _EOF;
+	}
+
+	bool isReadError = ferror(file) != 0;
+	if (isReadError)
+	{
+		const uint8_t _ERROR = 0b11; // error return value
+		return _ERROR;
+	}
+
+	uint8_t read_bit = buffer & 0b1;
+	buffer >>= 1;
+	size--;
+	return read_bit;
 }
 
-uint8_t Bits::livres()
+uint8_t BitBuffer::free_bits()
 {
-	return 8 - n;
+	return 8 - size;
 }
