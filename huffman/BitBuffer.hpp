@@ -21,7 +21,8 @@ class BitBuffer {
   
 BitBuffer::BitBuffer(FILE *file) :
 	file(file),
-	size(0)
+	size(0),
+	buffer(0)
 { }
 
 void BitBuffer::put_bit(uint8_t bit)
