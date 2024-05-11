@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Node.hpp"
+#include "HeapNode.hpp"
 #include <stdlib.h>
 #include <vector>
 
@@ -9,13 +9,13 @@ class Heap
 {
     public:
         Heap();
-        Heap(Node<T> array, int size);
-        Heap(Node<T> *array, int size);
+        Heap(HeapNode<T> array, int size);
+        Heap(HeapNode<T> *array, int size);
         ~Heap();
         T pop();
         void put(int priority, T element);
     private:
-        std::vector<Node<T>> vector;
+        std::vector<HeapNode<T>> vector;
         int left(int index);
         int right(int index);
         int parent(int index);
@@ -27,25 +27,25 @@ class Heap
 
 template<typename T>
 Heap<T>::Heap()
-    : vector(std::vector<Node<T>>())
+    : vector(std::vector<HeapNode<T>>())
 {
 }
 
 template<typename T>
-Heap<T>::Heap(Node<T> array, int size)
+Heap<T>::Heap(HeapNode<T> array, int size)
 {
     Heap();
     for (int i = 0; i < size; i++)
     {
-        Node<T> *node = new Node<T>(array[i]);
+        HeapNode<T> *node = new HeapNode<T>(array[i]);
         vector.push_back(*node);
     }
     heapify();
 }
 
 template<typename T>
-Heap<T>::Heap(Node<T> *array, int size)
-    : vector(std::vector<Node<T>>(array, array + size))
+Heap<T>::Heap(HeapNode<T> *array, int size)
+    : vector(std::vector<HeapNode<T>>(array, array + size))
 {
     heapify();
 }
@@ -58,7 +58,7 @@ Heap<T>::~Heap()
 template<typename T>
 T Heap<T>::pop()
 {
-    Node<T> firstNode = vector.front();
+    HeapNode<T> firstNode = vector.front();
     T element = firstNode.element;
     vector.front() = vector.back();
     vector.pop_back();
@@ -70,7 +70,7 @@ T Heap<T>::pop()
 template<typename T>
 void Heap<T>::put(int priority, T element)
 {
-    Node<T> node = Node<T>(priority, element);
+    HeapNode<T> node = HeapNode<T>(priority, element);
     vector.push_back(node);
     int lastIndex = vector.size() - 1;
     up(lastIndex);
@@ -97,7 +97,7 @@ int Heap<T>::parent(int index)
 template<typename T>
 void Heap<T>::swap(int firstIndex, int secondIndex)
 {
-    Node<T> aux = vector[firstIndex];
+    HeapNode<T> aux = vector[firstIndex];
     vector[firstIndex] = vector[secondIndex];
     vector[secondIndex] = aux;
 }

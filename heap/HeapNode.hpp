@@ -1,25 +1,25 @@
 #pragma once
 
 template<typename T>
-class Node
+class HeapNode
 {
     template<typename R> friend class Heap;
     public:
-        Node(int priority, T element);
-        ~Node();
+        HeapNode(int priority, T element);
+        ~HeapNode();
     private:
         int priority;
         T element;
 };
 
 template<typename T>
-Node<T>::Node(int priority, T element)
+HeapNode<T>::HeapNode(int priority, T element)
     : priority(priority)
     , element(element)
 {
 }
 
 template<typename T>
-Node<T>::~Node()
+HeapNode<T>::~HeapNode()
 {
 }
