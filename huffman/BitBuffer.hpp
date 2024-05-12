@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <cstdint>
 
 class BitBuffer {
@@ -28,7 +27,7 @@ BitBuffer::BitBuffer(FILE *file) :
 void BitBuffer::put_bit(uint8_t bit)
 {
 	uint8_t new_bit = bit & 0b1;
-	new_bit <<= size;
+	buffer <<= 1;
 	buffer |= new_bit;
 	size++;
 	if (size == 8) write_byte();
