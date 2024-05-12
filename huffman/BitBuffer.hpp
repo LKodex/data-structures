@@ -73,9 +73,7 @@ uint8_t BitBuffer::get_bit()
 		return _ERROR;
 	}
 
-	uint8_t read_bit = buffer & 0b1;
-	buffer >>= 1;
-	size--;
+	uint8_t read_bit = (buffer >> --size) & 0b1;
 	return read_bit;
 }
 
