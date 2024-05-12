@@ -4,14 +4,22 @@
 #include <cstdint>
 #include <unordered_map>
 #include <queue>
+#include <bitset>
 #include "BitBuffer.hpp"
 
 void compress(FILE *inputFile, FILE *outputFile);
 void decompress(FILE *inputFile, FILE *outputFile);
 void getPreorderCharacters(class HuffmanTreeNode *tree, std::vector<uint8_t> *vector);
 void getPreorderTreeBits(class HuffmanTreeNode *tree, BitBuffer *bitBuffer);
-void getCharacterTable(class HuffmanTreeNode *tree, std::unordered_map<uint8_t, class Node> *table, int quantity, uint8_t bits);
+void getCharacterTableCompress(class HuffmanTreeNode *tree, std::unordered_map<uint8_t, class Node> *table, int quantity, uint8_t bits);
 void printHuffmanTree(class HuffmanTreeNode *tree);
+void getCharacterTableDecompress(class HuffmanTreeNode *tree, std::unordered_map<class Node, uint8_t> *table, int quantity, uint8_t bits);
+class HuffmanTreeNode *buildHuffmanTreeFromBits(std::vector<uint8_t> *characters, BitBuffer *bitBuffer);
+class HuffmanTreeNode *_buildHuffmanTreeFromBits(std::vector<uint8_t> *characters, BitBuffer *bitBuffer, int *characterIndex);
+
+class Node;
+class HuffmanTreeNode;
+class MinHeapHuffmanTreeNodeComparator;
 
 class Node
 {
@@ -21,12 +29,37 @@ class Node
         ~Node();
         int bitQuantity;
         uint8_t bits;
+        bool operator==(const Node &other);
+};
+
+template<>
+struct std::equal_to<Node>
+{
+    bool operator() (const Node &lhs, const Node &rhs) const
+    {
+        return lhs.bitQuantity == rhs.bitQuantity && lhs.bits == rhs.bits;       
+    };
+};
+
+template<>
+struct std::hash<Node>
+{
+    size_t operator()(const Node &node) const
+    {
+        return (std::hash<int>()(node.bitQuantity) << 1)
+            ^ (std::hash<uint8_t>()(node.bits) >> 1);
+    }
 };
 
 Node::Node()
     : bitQuantity(0)
     , bits(0b0)
 { }
+
+bool Node::operator==(const Node &other)
+{
+    return bitQuantity == other.bitQuantity && bits == other.bits;
+}
 
 Node::Node(int bitQuantity, uint8_t bits)
     : bitQuantity(bitQuantity)
@@ -65,7 +98,7 @@ HuffmanTreeNode::HuffmanTreeNode(uint8_t byte, uint32_t frequency)
 HuffmanTreeNode::~HuffmanTreeNode()
 { }
 
-class MinHeapNodeComparator
+class MinHeapHuffmanTreeNodeComparator
 {
     public:
         bool operator() (HuffmanTreeNode *&left, HuffmanTreeNode *&right) const
@@ -156,7 +189,7 @@ void compress(FILE *inputFile, FILE *outputFile)
     
     uint16_t distinctCharacterCount = charactersFrequency.size();
     
-    std::priority_queue<class HuffmanTreeNode *, std::vector<class HuffmanTreeNode *>, class MinHeapNodeComparator> nodeFrequencyQueue;
+    std::priority_queue<class HuffmanTreeNode *, std::vector<class HuffmanTreeNode *>, class MinHeapHuffmanTreeNodeComparator> nodeFrequencyQueue;
 
     for (auto it = charactersFrequency.begin(); it != charactersFrequency.end(); ++it)
     {
@@ -203,7 +236,7 @@ void compress(FILE *inputFile, FILE *outputFile)
     getPreorderTreeBits(huffmanTree, &outputBitBuffer);
 
     std::unordered_map<uint8_t, Node> characterTable;
-    getCharacterTable(huffmanTree, &characterTable, 0, 0b0);
+    getCharacterTableCompress(huffmanTree, &characterTable, 0, 0b0);
 
     while (true)
     {
@@ -279,26 +312,107 @@ void getPreorderTreeBits(class HuffmanTreeNode *tree, BitBuffer *bitBuffer)
     getPreorderTreeBits(tree->right, bitBuffer);
 }
 
-void getCharacterTable(class HuffmanTreeNode *tree, std::unordered_map<uint8_t, Node> *table, int quantity, uint8_t bits)
+void getCharacterTableCompress(class HuffmanTreeNode *tree, std::unordered_map<uint8_t, class Node> *table, int quantity, uint8_t bits)
 {
-    bool isNullNode = tree == nullptr;
-    if (isNullNode)
-    {
-        return;
-    }
-
     bool isLeaf = tree->left == nullptr && tree->right == nullptr;
     if (isLeaf)
     {
         Node node(quantity, bits);
         (*table)[tree->byte] = node;
+        return;
     }
     bits <<= 1;
-    getCharacterTable(tree->left, table, quantity + 1, bits | 0b0);
-    getCharacterTable(tree->right, table, quantity + 1, bits | 0b1);
+    getCharacterTableCompress(tree->left, table, quantity + 1, bits | 0b0);
+    getCharacterTableCompress(tree->right, table, quantity + 1, bits | 0b1);
 }
 
 void decompress(FILE *inputFile, FILE *outputFile)
 {
+    uint16_t distinctCharacters;
+    fread(&distinctCharacters, sizeof(uint16_t), 1, inputFile);
 
+    uint32_t totalCharacters;
+    fread(&totalCharacters, sizeof(uint32_t), 1, inputFile);
+
+    std::vector<uint8_t> characters;
+
+    for (uint16_t i = 0; i < distinctCharacters; i++)
+    {
+        uint8_t byte;
+        fread(&byte, sizeof(uint8_t), 1, inputFile);
+        characters.push_back(byte);
+    }
+    
+    BitBuffer inputBitBuffer(inputFile);
+
+    HuffmanTreeNode *huffmanTree = buildHuffmanTreeFromBits(&characters, &inputBitBuffer);
+
+    std::unordered_map<class Node, uint8_t> characterTable;
+    getCharacterTableDecompress(huffmanTree, &characterTable, 0, 0b0);
+
+    Node node;
+    int characterWrote = 0;
+    while (characterWrote < totalCharacters)
+    {
+
+        uint8_t bit = inputBitBuffer.get_bit();
+
+        if (bit == 0b10) // EOF
+        {
+            std::cout << "EOF" << std::endl;
+            break;
+        }
+
+        node.bits <<= 1;
+        node.bits |= bit;
+        node.bitQuantity++;
+
+        std::unordered_map<class Node, uint8_t>::iterator it = characterTable.find(node);
+
+        if (it != characterTable.end())
+        {
+            uint8_t byte = characterTable[node];
+            fwrite(&byte, sizeof(uint8_t), 1, outputFile);
+            characterWrote++;
+            node.bits = 0b0;
+            node.bitQuantity = 0;
+        }
+    }
+}
+
+void getCharacterTableDecompress(class HuffmanTreeNode *tree, std::unordered_map<class Node, uint8_t> *table, int quantity, uint8_t bits)
+{
+    bool isLeaf = tree->left == nullptr && tree->right == nullptr;
+    if (isLeaf)
+    {
+        Node leaf(quantity, bits);
+        (* table)[leaf] = tree->byte;
+        return;
+    }
+    bits <<= 1;
+    getCharacterTableDecompress(tree->left, table, quantity + 1, bits | 0b0);
+    getCharacterTableDecompress(tree->right, table, quantity + 1, bits | 0b1);
+}
+
+class HuffmanTreeNode *buildHuffmanTreeFromBits(std::vector<uint8_t> *characters, BitBuffer *bitBuffer)
+{
+    int index = 0;
+    return _buildHuffmanTreeFromBits(characters, bitBuffer, &index);
+}
+
+class HuffmanTreeNode *_buildHuffmanTreeFromBits(std::vector<uint8_t> *characters, BitBuffer *bitBuffer, int *characterIndex)
+{
+    uint8_t bit = bitBuffer->get_bit();
+    bool isLeaf = bit == 0b1;
+    if (isLeaf)
+    {
+        uint8_t character = (*characters)[*characterIndex];
+        *characterIndex += 1;
+        HuffmanTreeNode *leafNode = new HuffmanTreeNode(character, 0);
+        return leafNode;
+    }
+    HuffmanTreeNode *internalNode = new HuffmanTreeNode();
+    internalNode->left = _buildHuffmanTreeFromBits(characters, bitBuffer, characterIndex);
+    internalNode->right = _buildHuffmanTreeFromBits(characters, bitBuffer, characterIndex);
+    return internalNode;
 }
