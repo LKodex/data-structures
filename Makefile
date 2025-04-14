@@ -1,5 +1,5 @@
 CC = gcc
-CCFLAGS = -Wall -iquote src/include
+CCFLAGS = -Wall -iquote src/include -isystem vendor/include
 
 build : main.o vector.o
 	mkdir -p build
@@ -17,7 +17,7 @@ test : build_test run_test
 
 build_test : test_main.o test_vector.o vector.o
 	mkdir -p build
-	$(CC) $(CCFLAGS) out/test/main.o out/main/vector.o -o build/test_main.exe -lcunit
+	$(CC) $(CCFLAGS) out/test/main.o out/main/vector.o -o build/test_main.exe -Lvendor/lib -lcunit
 
 run_test : build_test
 	valgrind -s --leak-check=full ./build/test_main.exe
