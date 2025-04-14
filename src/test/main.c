@@ -1,6 +1,7 @@
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
 #include "test_vector.c"
+#include "test_heap.c"
 
 int main()
 {
@@ -10,6 +11,7 @@ int main()
     }
 
     suite_vector_test();
+    suite_heap_test();
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
