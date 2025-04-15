@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "heap.h"
 
-heap_t * heap_new()
+heap_t * heap_new(int8_t (* cmp)(void *, void *))
 {
     return NULL;
 }
